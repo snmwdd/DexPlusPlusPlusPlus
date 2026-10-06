@@ -51,4 +51,4 @@ Here are the features that were added/fixed in Dex#:
 - [Moon](https://github.com/LorekeeperZinnia/Dex) – Original Dex Explorer  
 - [Toon](https://github.com/Toon-arch) – Contributor and IY's Dex parts and components
 - [ChatGPT6.1](chatgpt.com) - Help me write code
-- # [deobf](https://github.com/Luaunveil/luau-decompiler)
+- [luau-decompiler](https://github.com/Luaunveil/luau-decompiler) - decompiler deobf
