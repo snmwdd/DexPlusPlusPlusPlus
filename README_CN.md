@@ -1,4 +1,4 @@
-# Dex# (DexPlusPlusPlusPlus)
+# Dex# v12.0 (DexPlusPlusPlusPlus)
 
 ![DevTool Dex#](https://img.shields.io/badge/DevTool-Dex++++-green)
 ![Roblox Luau](https://img.shields.io/badge/Roblox-Luau-blue)
@@ -28,6 +28,7 @@ Dex# 是基于 Dex++ 进行定制和扩展的版本。
 ### Dex# 新增 / 修复的功能
 
 - 支持直接点击 GUI 对象进行选择
+- 点击 GUI 选择支持 PlayerGui 和 CoreGui，仅排除 Dex 自身界面与执行器隐藏容器中的内容
 - 选择 GUI 后自动在 Explorer 中定位对应对象
 - 为当前选中的 GUI 显示蓝色选择轮廓
 - 为选中的 GUI 对象和 Part 增加移动、缩放和旋转工具
@@ -38,6 +39,12 @@ Dex# 是基于 Dex++ 进行定制和扩展的版本。
 - GUI 选择与编辑同时支持鼠标和触摸操作
 - Settings 中加入 English / 中文语言切换
 - 默认语言为英文
+- 语言选项下新增默认开启的“翻译属性”，中文模式下翻译属性名称和分类，支持中英文属性搜索，切换立即生效并保存设置
+- “保存实例”窗口支持完整中英文界面，“反编脚本”默认关闭，可按需开启
+- Dex# 菜单新增灰色半透明“文件管理器”，浏览执行器 Workspace 文件目录，支持搜索、新建、文本编辑保存和确认删除；文本预览上限为 256 KB
+- 文件管理器操作按钮只显示灰色图标，悬停显示中英文提示；文件夹、Lua/Luau 与普通文件分别显示对应图标，窄窗口支持工具栏横向滚动
+- 同一窗口可切换到“游戏资源”，搜索并预览游戏内图片、贴图和模型，修改图片资源引用、复制资源 ID/实例路径、定位到资源列表、将模型导出到上次浏览的 Workspace 文件夹；清除引用和删除模型均需确认。模型预览使用移除脚本的副本，修改作用于当前客户端会话；资源列表只绘制可见行
+- Dex# 菜单新增 **spy**，原作者 **deivid、upio** 已加入“关于”。使用 Dex 原有启动进度预加载，完成后隐藏；打开菜单直接显示，关闭或缩小后保留已加载状态并继续捕获。窗口与控件采用 Dex 灰色半透明风格，设置及调用过滤器使用 Dex 原生勾选开关，常用图标复用 Dex 图标。界面随 Dex 设置切换中英文，远程对象名称、输入内容、参数和代码保持原样。二级窗口使用父级层级避免遮挡；重载／卸载 Dex 时清理 Spy，启动失败不会阻止 Dex 加载。
 - 优化反编译器选择菜单，使界面更加紧凑
 - 增加 ASCII 风格的 `Re-Deobf` 按钮
 - 新增 `lua.expert/demo`
@@ -68,3 +75,4 @@ Dex# 是基于 Dex++ 进行定制和扩展的版本。
 - [Moon](https://github.com/LorekeeperZinnia/Dex) – 原始 Dex Explorer
 - [Toon](https://github.com/Toon-arch) – 项目贡献者，以及 IY Dex 部分组件的来源
 - [ChatGPT](https://chatgpt.com) – 协助代码开发、调试与文档整理
+- 修复设置勾选开关需先点击输入框、重复点击才生效的问题；禁用开关不触发修改，快速切换不会被过期动画覆盖。

@@ -45,6 +45,7 @@ DefaultSettings = (function()
 	
 	return {
 		Language = "English",
+		TranslateProperties = true,
 		Explorer = {
 			_Recurse = true,
 			Sorting = true,
@@ -176,11 +177,11 @@ end
 Main = (function()
 	local Main = {}
 
-	Main.ModuleList = {"Explorer","Properties","ScriptViewer","Console","SaveInstance","ModelViewer","SettingsWindow"}
+	Main.ModuleList = {"Explorer","Properties","ScriptViewer","Console","SaveInstance","ModelViewer","SettingsWindow","FileManager","GameAssets","CobaltRuntime","SpyLocalization","Spy"}
 	Main.Elevated = false
 	Main.AllowDraggableOnMobile = true
 	Main.MissingEnv = {}
-	Main.Version = "3.0"
+	Main.Version = "v12.0"
 	Main.Mouse = plr:GetMouse()
 	Main.AppControls = {}
 	Main.Apps = Apps
@@ -480,6 +481,8 @@ Main = (function()
 		env.appendfile = appendfile
 		env.makefolder = makefolder
 		env.listfiles = listfiles
+		env.delfile = delfile
+		env.delfolder = delfolder
 		env.loadfile = loadfile
 		env.saveinstance = saveinstance or (function()
 			--warn("No built-in saveinstance exists, using SynSaveInstance and wrapper...")
@@ -1504,22 +1507,30 @@ Main = (function()
 		local pickerConnection
 		local pickRequest = 0
 
-		local function isPlayerGuiObject(object)
+		local function getHiddenGuiRoot()
 			local playerGui = plr:FindFirstChildOfClass("PlayerGui")
-			if not playerGui then return false end
-			-- Exclude the executor's actual hidden container, even below PlayerGui.
-			local hiddenGui
+			local coreOK, coreGui = pcall(function() return service.CoreGui end)
 			local getter = (env and env.gethui) or gethui
 			if type(getter) == "function" then
 				local ok, root = pcall(getter)
-				if ok and root ~= playerGui then hiddenGui = root end
+				-- Some executors return a shared GUI service rather than a hidden
+				-- folder. That must not exclude all of PlayerGui or CoreGui.
+				if ok and root ~= playerGui and (not coreOK or root ~= coreGui) then return root end
 			end
+		end
+
+		local function isSelectableGuiObject(object, hiddenGui)
+			if not object:IsA("GuiObject") then return false end
+			local playerGui = plr:FindFirstChildOfClass("PlayerGui")
+			local coreOK, coreGui = pcall(function() return service.CoreGui end)
+			hiddenGui = hiddenGui or getHiddenGuiRoot()
 			local current = object
 			while current do
 				if current == hiddenGui then return false end
 				if current == Main.MainGui or (Main.GuiPickerOwnRoots and Main.GuiPickerOwnRoots[current]) then return false end
-				if current:IsA("ScreenGui") and current.Name:sub(1,5) == "_DPP_" then return false end
-				if current == playerGui then return true end
+				if current == Explorer.SelectionVisualsHolder then return false end
+				if Main.TransformTools and Main.TransformTools.IsOverlayRoot and Main.TransformTools.IsOverlayRoot(current) then return false end
+				if current == playerGui or (coreOK and current == coreGui) then return true end
 				current = current.Parent
 			end
 			return false
@@ -1531,6 +1542,7 @@ Main = (function()
 			if size.X <= 0 or size.Y <= 0 then return end
 			local current = object
 			local internal, order = false, 0
+			local hiddenGui = getHiddenGuiRoot()
 			while current do
 				if current:IsA("GuiObject") and not current.Visible then return end
 				if current:IsA("LayerCollector") and not current.Enabled then return end
@@ -1538,16 +1550,16 @@ Main = (function()
 				if current == Explorer.SelectionVisualsHolder then return end
 				if Main.TransformTools and Main.TransformTools.IsOverlayRoot and Main.TransformTools.IsOverlayRoot(current) then return end
 				if current == Main.MainGui or (Main.GuiPickerOwnRoots and Main.GuiPickerOwnRoots[current]) then internal = true end
+				if current == hiddenGui then internal = true end
 				if current:IsA("ScreenGui") then
-					internal = internal or current.Name:sub(1,5) == "_DPP_"
 					order = current.DisplayOrder
 				end
 				current = current.Parent
 			end
-			-- Only PlayerGui descendants may be selected; CoreGui is never a target.
-			if not internal and not isPlayerGuiObject(object) then return end
+			if not internal and not isSelectableGuiObject(object, hiddenGui) then return end
 			if internal then
-				-- Transparent fullscreen Dex layout containers do not obscure game GUIs.
+				-- Excluded panels block clicks through to other GUIs, while their
+				-- transparent fullscreen layout containers do not obscure targets.
 				local painted = object:IsA("GuiButton") or object:IsA("TextBox") or object.BackgroundTransparency < 1
 				if object:IsA("TextLabel") then painted = painted or (object.Text ~= "" and object.TextTransparency < 1) end
 				if object:IsA("ImageLabel") then painted = painted or (object.Image ~= "" and object.ImageTransparency < 1) end
@@ -1560,7 +1572,7 @@ Main = (function()
 			local roots = {}
 			local playerGui = plr:FindFirstChildOfClass("PlayerGui")
 			if playerGui then roots[#roots + 1] = playerGui end
-			-- CoreGui is queried only to block clicks through Dex panels, never for targets.
+			-- Both game GUIs and Roblox CoreGui interfaces can be selected.
 			local coreOK, coreGui = pcall(function() return service.CoreGui end)
 			if coreOK and coreGui then roots[#roots + 1] = coreGui end
 			local best
@@ -1584,7 +1596,7 @@ Main = (function()
 		Main.GetGuiAtPosition = getHit
 
 		local function selectGui(object)
-			if not isPlayerGuiObject(object) then return false end
+			if not isSelectableGuiObject(object) then return false end
 			local node = nodes[object]
 			if not node or node.Del then return false end
 			local sameSelection = #selection.List == 1 and selection.List[1] == node
@@ -1732,6 +1744,7 @@ Main = (function()
 				"Cazan (3D Preview)",
 				"Chillz (Original Dex)",
 				"Gpt6.1 (Dex#)",
+				"deivid, upio (Cobalt Spy)",
 			}
 			
 			if isInfoCD then return end
@@ -1794,6 +1807,8 @@ Main = (function()
 		Main.CreateApp({Name = "Console", IconMap = Main.LargeIcons, Icon = "Executor", Window = Console.Window})
 		
 		Main.CreateApp({Name = "Save Instance", IconMap = Main.LargeIcons, Icon = "Book", Window = SaveInstance.Window})
+		Main.CreateApp({Name = "File Manager", DrawIcon = Apps.FileManager.DrawIcon, Window = Apps.FileManager.Window})
+		Main.CreateApp({Name = "spy", DrawIcon = Apps.Spy.DrawIcon, Window = Apps.Spy.Window})
 		
 		Main.CreateApp({Name = "3D Viewer", IconMap = Main.LargeIcons, Icon = "Object", Window = ModelViewer.Window})
 
@@ -1933,12 +1948,17 @@ Main = (function()
 		SaveInstance.Init()
 		ModelViewer.Init()
 		SettingsWindow.Init()
+		Apps.FileManager.Init()
+		Apps.Spy.Init()
+		intro.SetProgress("Loading spy",0.82)
+		Lib.FastWait()
+		Apps.Spy.Start()
 		--SecretServicePanel.Init()
 		
 		
 		if env.readfile and listfiles then
 			if #listfiles("dex/plugins") > 0 then
-				intro.SetProgress("Loading Plugin Files",0.8)
+				intro.SetProgress("Loading Plugin Files",0.86)
 				for _, pluginDir in pairs(listfiles("dex/plugins")) do
 					local moduleData = Main.LoadPluginFile(pluginDir)
 					moduleData.PluginData = moduleData.PluginData or {}
@@ -1978,6 +1998,7 @@ Main = (function()
 	end
 	
 	Main.Uninit = function()
+		if Apps.Spy then Apps.Spy.Destroy() end
 		if Main.Localization then Main.Localization.Destroy() Main.Localization = nil end
 		if Main.TransformTools then Main.TransformTools.Destroy() Main.TransformTools = nil end
 		Main.SetGuiPickerEnabled(false)

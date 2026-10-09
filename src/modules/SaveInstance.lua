@@ -39,7 +39,7 @@ local function main()
 	local Saving = false
 	
 	local SaveInstanceArgs = {
-		Decompile = true,
+		Decompile = false,
 		DecompileTimeout = 10,
 		DecompileIgnore = {"Chat", "CoreGui", "CorePackages"},
 		NilInstances = false,
@@ -181,7 +181,7 @@ local function main()
 		
 		-- Options
 		
-		local Decompile = AddCheckbox("Decompile Scripts (LocalScript and ModuleScript)", SaveInstanceArgs.Decompile)
+		local Decompile = AddCheckbox("Decompile Scripts", SaveInstanceArgs.Decompile)
 		Decompile.OnInput:Connect(function()
 			SaveInstanceArgs.Decompile = Decompile.Toggled
 		end)

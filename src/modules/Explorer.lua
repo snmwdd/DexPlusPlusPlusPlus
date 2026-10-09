@@ -831,6 +831,16 @@ local function main()
 		Explorer.ViewNode(nodes[obj])
 	end
 
+	Explorer.SelectObject = function(obj)
+		local node = nodes[obj]
+		if not node or node.Del then return false end
+		Explorer.ClearSearch()
+		Explorer.Window:Show()
+		selection:Set(node)
+		Explorer.ViewNode(node)
+		return true
+	end
+
 	Explorer.MakeNodeVisible = function(node,expandRoot)
 		if not node then return end
 

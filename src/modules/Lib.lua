@@ -5222,65 +5222,18 @@ local function main()
 				Middle = filler.middle
 			}
 	
-			-- New:
-			--[[checkbox.Activated:Connect(function()
-				if Lib.CheckMouseInGui(checkbox) then
-					if self.Style == 0 then
-						ripple(ripples_container, self.Disabled and self.Colors.Disabled or self.Colors.Primary)
-					end
-
-					if not self.Disabled then
-						self:SetState(not self.Toggled,true)
-					else
-						self:Paint()
-					end
-
-					self.OnInput:Fire()
-				end
-			end)]]
-			
-			-- Best input compatibility:
-			checkbox.MouseButton1Up:Connect(function()
-				if Lib.CheckMouseInGui(checkbox) then
-					if self.Style == 0 then
-						ripple(ripples_container, self.Disabled and self.Colors.Disabled or self.Colors.Primary)
-					end
-
-					if not self.Disabled then
-						self:SetState(not self.Toggled,true)
-					else
-						self:Paint()
-					end
-
-					self.OnInput:Fire()
-				end
+			-- Activated uses Roblox's hit testing, including touch and keyboard.
+			-- Main.Mouse can be stale until a TextBox gains focus in executors.
+			checkbox.Activated:Connect(function()
+				if self.Disabled or self.Destroyed then return end
+				if self.Style == 0 then ripple(ripples_container, self.Colors.Primary) end
+				self:SetState(not self.Toggled,true)
+				self.OnInput:Fire()
 			end)
-
-			-- Old:
-			--[[checkbox.InputBegan:Connect(function(i)
-				if i.UserInputType == Enum.UserInputType.MouseButton1 then
-					local release
-					release = service.UserInputService.InputEnded:Connect(function(input)
-						if input.UserInputType == Enum.UserInputType.MouseButton1 then
-							release:Disconnect()
-
-							if Lib.CheckMouseInGui(checkbox) then
-								if self.Style == 0 then
-									ripple(ripples_container, self.Disabled and self.Colors.Disabled or self.Colors.Primary)
-								end
-
-								if not self.Disabled then
-									self:SetState(not self.Toggled,true)
-								else
-									self:Paint()
-								end
-								
-								self.OnInput:Fire()
-							end
-						end
-					end)
-				end
-			end)]]
+			checkbox.Destroying:Connect(function()
+				self.Destroyed = true
+				if self.OutlineColorTween then self.OutlineColorTween:Cancel() end
+			end)
 
 			self:Paint()
 		end
@@ -5334,11 +5287,12 @@ local function main()
 		end
 
 		funcs.SetState = function(self,val,anim)
+			if self.Destroyed then return end
 			self.Toggled = val
 
 			if self.OutlineColorTween then self.OutlineColorTween:Cancel() end
-			local setStateTime = tick()
-			self.LastSetStateTime = setStateTime
+			self.StateRevision = (self.StateRevision or 0) + 1
+			local stateRevision = self.StateRevision
 
 			if self.Toggled then
 				if self.Style == 0 then
@@ -5346,7 +5300,7 @@ local function main()
 						self.OutlineColorTween = service.TweenService:Create(self.GuiElems.Outline, ti(4/15, Enum.EasingStyle.Circular, Enum.EasingDirection.Out), {BackgroundColor3 = self.Colors.Primary})
 						self.OutlineColorTween:Play()
 						delay(0.15, function()
-							if setStateTime ~= self.LastSetStateTime then return end
+							if self.Destroyed or stateRevision ~= self.StateRevision then return end
 							self:Paint()
 							TweenSize(self.GuiElems.Checkmark, ud2o(14, 20), "Out", "Bounce", 2/15, true)
 						end)
@@ -5367,7 +5321,7 @@ local function main()
 						self.OutlineColorTween = service.TweenService:Create(self.GuiElems.Outline, ti(4/15, Enum.EasingStyle.Circular, Enum.EasingDirection.In), {BackgroundColor3 = self.Colors.Secondary})
 						self.OutlineColorTween:Play()
 						delay(0.15, function()
-							if setStateTime ~= self.LastSetStateTime then return end
+							if self.Destroyed or stateRevision ~= self.StateRevision then return end
 							self:Paint()
 							TweenSize(self.GuiElems.Checkmark, ud2o(0, 20), "Out", "Quad", 1/15, true)
 						end)
@@ -5406,23 +5360,23 @@ local function main()
 			return obj
 		end
 
-		local function fromFrame(frame)
+		local function fromFrame(frame,style)
 			local obj = setmetatable({
 				Toggled = false,
 				Disabled = false,
+				OnInput = Lib.Signal.new(),
+				Style = style or 0,
 				Colors = {
-					Background = c3(36,36,36),
-					Primary = c3(49,176,230),
-					Secondary = c3(25,25,25),
-					Disabled = c3(64,64,64),
-					DisabledBackground = c3(52,52,52)
+					Background = c3(36,36,36), Primary = c3(49,176,230),
+					Secondary = c3(25,25,25), Disabled = c3(64,64,64),
+					DisabledBackground = c3(52,52,52), DisabledCheck = c3(80,80,80)
 				}
 			},mt)
 			initGui(obj,frame)
 			return obj
 		end
 
-		return {new = new, fromFrame}
+		return {new = new, fromFrame = fromFrame}
 	end)()
 
 	Lib.BrickColorPicker = (function()

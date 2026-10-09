@@ -61,6 +61,14 @@ local function main()
 	Properties.AddAttributeProp = {Category = "Attributes", Class = "", Name = "", SpecialRow = "AddAttribute", Tags = {}}
 	Properties.SoundPreviewProp = {Category = "Data", ValueType = {Name = "SoundPlayer"}, Class = "Sound", Name = "Preview", Tags = {}}
 
+	Properties.GetDisplayName = function(prop)
+		local source = prop.CategoryName or prop.DisplayName
+			or (prop.SubName and prop.SubName:match("[^.]+$")) or prop.Name
+		-- User-created attribute names are data, not API labels.
+		if prop.IsAttribute or not Main.Localization then return source end
+		return Main.Localization.TranslateProperty(source, prop.CategoryName ~= nil)
+	end
+
 	Properties.IgnoreProps = {
 		["DataModel"] = {
 			["PrivateServerId"] = true,
@@ -609,7 +617,6 @@ local function main()
 		local getTextSize = textServ.GetTextSize
 		local font = Enum.Font.SourceSans
 		local size = Vector2.new(math.huge,20)
-		local stringSplit = string.split
 		local entryIndent = Properties.EntryIndent
 		local isFirstScaleType = Settings.Properties.ScaleType == 0
 		local find,lower = string.find,string.lower
@@ -619,12 +626,13 @@ local function main()
 			for i = 1,#props do
 				local prop = props[i]
 				local propName = prop.Name
-				local subName = prop.SubName
 				local category = prop.Category
+				local displayName = Properties.GetDisplayName(prop)
 
 				local visible
 				if searchText and depth == 1 then
-					if find(lower(propName),searchText,1,true) then
+					if find(lower(propName),searchText,1,true)
+						or find(lower(displayName),searchText,1,true) then
 						visible = true
 					end
 				else
@@ -641,9 +649,6 @@ local function main()
 					if depth > 1 then prop.Depth = depth if depth > maxDepth then maxDepth = depth end end
 
 					if isFirstScaleType then
-						local nameArr = subName and stringSplit(subName,".")
-						local displayName = prop.DisplayName or (nameArr and nameArr[#nameArr]) or propName
-
 						local nameWidth = nameWidthCache[displayName]
 						if not nameWidth then nameWidth = getTextSize(textServ,displayName,14,font,size).X nameWidthCache[displayName] = nameWidth end
 
@@ -734,8 +739,7 @@ local function main()
 			if not prop then return end
 			if input.UserInputType == Enum.UserInputType.MouseMovement and not nameFrame.PropName.TextFits then
 				local fullNameFrame = Properties.FullNameFrame	
-				local nameArr = string.split(prop.Class.."."..prop.Name..(prop.SubName or ""),".")
-				local dispName = prop.DisplayName or nameArr[#nameArr]
+				local dispName = Properties.GetDisplayName(prop)
 				local sizeX = service.TextService:GetTextSize(dispName,14,Enum.Font.SourceSans,Vector2.new(math.huge,20)).X
 
 				fullNameFrame.TextLabel.Text = dispName
@@ -1386,7 +1390,6 @@ local function main()
 		local inputPropVisible = false
 		local isa = game.IsA
 		local UDim2 = UDim2
-		local stringSplit = string.split
 		local scaleType = Settings.Properties.ScaleType
 
 		-- Clear connections
@@ -1444,7 +1447,7 @@ local function main()
 						entry.BackgroundColor3 = Settings.Theme.Main1
 						valueFrame.Visible = false
 
-						propNameBox.Text = prop.CategoryName
+						propNameBox.Text = Properties.GetDisplayName(prop)
 						propNameBox.Font = Enum.Font.SourceSansBold
 						expand.Visible = true
 						propNameBox.TextColor3 = Settings.Theme.Text
@@ -1479,8 +1482,7 @@ local function main()
 							valueFrame.Size = UDim2.new(0.5,-attributeOffset,1,0)
 						end
 
-						local nameArr = stringSplit(gName,".")
-						propNameBox.Text = prop.DisplayName or nameArr[#nameArr]
+						propNameBox.Text = Properties.GetDisplayName(prop)
 						propNameBox.Font = Enum.Font.SourceSans
 						entry.BackgroundColor3 = Settings.Theme.Main2
 						valueFrame.Visible = true
@@ -1802,6 +1804,7 @@ local function main()
 		})
 
 		local fullNameFrame = Lib.Frame.new()
+		if Main.Localization then Main.Localization.Ignore(fullNameFrame.Gui) end
 		local label = Lib.Label.new()
 		label.Parent = fullNameFrame.Gui
 		label.Position = UDim2.new(0,2,0,0)

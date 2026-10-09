@@ -61,7 +61,7 @@ local function main()
 		local label = Lib.Label.new()
 		
 		label.Gui.Parent = frame.Gui
-		label.Gui.Size = UDim2.new(1, 0,1, -15)
+		label.Gui.Size = UDim2.new(1, -25,1, 0)
 		label.Gui.Text = title
 		label.TextTruncate = Enum.TextTruncate.AtEnd
 		
@@ -296,7 +296,15 @@ local function main()
 				pcall(Main.SaveCurrentSettings)
 			end
 		end)
-		window.OnActivate:Connect(function() language:SetSelected(Settings.Language) end)
+		local translateProperties = AddCheckbox("Translate Properties", Settings.TranslateProperties ~= false)
+		translateProperties.OnInput:Connect(function()
+			Main.Localization.SetTranslateProperties(translateProperties.Toggled)
+			pcall(Main.SaveCurrentSettings)
+		end)
+		window.OnActivate:Connect(function()
+			language:SetSelected(Settings.Language)
+			translateProperties:SetState(Settings.TranslateProperties ~= false)
+		end)
 		AddSeperator("UI")
 		
 		local titleonmiddle = AddCheckbox("Window Title On Middle", Settings.Window.TitleOnMiddle)
