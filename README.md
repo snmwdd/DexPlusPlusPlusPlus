@@ -59,4 +59,32 @@ Here are the features that were added/fixed in Dex#:
 - [Toon](https://github.com/Toon-arch) – Contributor and IY's Dex parts and components
 - [ChatGPT6.1](chatgpt.com) - Help me write code
 - [luau-decompiler](https://github.com/Luaunveil/luau-decompiler) - decompiler deobf
-- Settings checkboxes respond on the first click without focusing an input box; disabled controls do not trigger changes and stale animations cannot overwrite the current check state.
+- [Cobalt](https://gitlab.com/upio/cobalt) - The `spy` module is adapted from Cobalt.
+
+
+## Update
++ Added "Translate Properties" setting (enabled by default), located below the language switcher.
++ Added Chinese translations for common property names and categories.
++ Added a semi-transparent gray file manager to the Dex# menu.
++ Supports browsing, searching, creating, editing (text), saving, and deleting items within the Workspace folder.
++ Added icons for folders, Lua/Luau scripts, and standard files; action buttons now use icons only, with hover tooltips.
++ Added "Game Assets" mode, supporting search and preview for images, textures, and models.
++ Supports modifying image references, copying asset IDs/paths, locating items in the Explorer, and exporting models.
++ Added confirmation prompts for unsaved changes, clearing asset references, and deleting models.
++ Added "Spy" functionality to the Dex# menu and credited original authors deivid and upio in the "About" section.
+
+- Removed the global exclusion of CoreGui from GUI selection.
+- Removed the original Cobalt close, minimize, and restore buttons when integrating Spy.
+
+= Version number updated from 3.0 to v12.0.
+= Property search now supports both Chinese and English names; translation toggles refresh immediately; column widths and full-name tooltips optimized.
+= Completed Chinese translation for "Save Instance"; renamed the existing decompile option to "Decompile Script" (disabled by default).
+= Fixed an issue where checkboxes required clicking the input field or multiple clicks to register.
+= Optimized checkbox animations, disabled states, and setting label layouts.
+= Standardized the Spy name to "spy"; adopted Dex's semi-transparent gray window style, fonts, and native checkbox styling.
+= Replaced standard Spy icons with Dex icons; interface language switches between Chinese and English based on settings.
+= Spy now preloads and remains hidden during the initial Dex startup sequence, appearing immediately when the menu is opened.
+= Spy retains its capture state after being closed or minimized; no reloading required upon reopening.
+= Fixed an issue where Spy's secondary windows were obscured by the main window.
+= Improved handling of Spy startup failures, duplicate instance checks, and cleanup during Dex reloads.
+= Synchronized updates for source code, documentation, and packaging scripts.
